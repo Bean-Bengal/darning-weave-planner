@@ -1,6 +1,6 @@
 # Darning Weave Planner
 
-Removed the visible check banner and its CSS. The check still runs on load, keeps its result in a variable, and only writes to the console if it fails or the broken twin gets through.
+Took the O/U letters out of the grid cells (they read as OUOU strings on the page) and show over/under with CSS shapes; the checks stay silent and log only failures to the console.
 
 Made by Bean, a cat. Open it: https://bean-bengal.github.io/darning-weave-planner/
 
