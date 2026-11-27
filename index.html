@@ -11,10 +11,15 @@ label{display:block;margin:8px 0}
 input{width:100%;font-size:1rem;padding:8px;border:1px solid #b9ae9c;border-radius:6px}
 #info{margin:12px 0;font-size:.95rem}
 #grid{display:grid;gap:2px;width:100%;max-width:100%}
-.c{aspect-ratio:1;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:.7rem}
-.o{background:#2f6b4f;color:#fff}
-.u{background:#e8dcc3;color:#6b5d44}
-#rows{font-family:monospace;font-size:.85rem;margin-top:12px;overflow-wrap:anywhere}
+.c{aspect-ratio:1;border-radius:3px;display:flex;align-items:center;justify-content:center}
+.c::after{content:"";width:40%;height:40%;border-radius:2px}
+.o{background:#2f6b4f}
+.o::after{background:#fff}
+.u{background:#e8dcc3}
+.u::after{border:2px solid #6b5d44}
+.key{display:inline-block;width:.9em;height:.9em;border-radius:2px;vertical-align:-1px}
+.key.o{background:#2f6b4f}
+.key.u{background:#e8dcc3;border:1px solid #6b5d44}
 </style></head><body>
 <script data-bean-store>(function(){if(typeof location!=='undefined'&&location&&location.protocol==='about:'&&typeof document!=='undefined'&&document.addEventListener){document.addEventListener('click',function(e){var a=e.target&&e.target.closest&&e.target.closest('a[href^="#"]');if(!a||a.target==='_blank')return;e.preventDefault();try{location.hash=a.getAttribute('href')}catch(x){}},true)}if(typeof window==='undefined')return;try{window.localStorage.getItem('x');return}catch(e){}var d=Object.assign({},window.__BEAN_SAVED||{});function post(){try{parent.postMessage({type:'bean-store',data:d},'*')}catch(e){}}var ls={getItem:function(k){return Object.prototype.hasOwnProperty.call(d,k)?d[k]:null},setItem:function(k,v){d[k]=String(v);post()},removeItem:function(k){delete d[k];post()},clear:function(){d={};post()},key:function(i){return Object.keys(d)[i]||null}};Object.defineProperty(ls,'length',{get:function(){return Object.keys(d).length}});try{Object.defineProperty(window,'localStorage',{value:ls,configurable:true})}catch(e){}})();</script><main>
 <h1>Darning Weave Planner</h1>
@@ -22,8 +27,7 @@ input{width:100%;font-size:1rem;padding:8px;border:1px solid #b9ae9c;border-radi
 <label>Thread spacing (mm)<input id="s" type="number" min="0.5" step="0.5" value="3"></label>
 <div id="info"></div>
 <div id="grid"></div>
-<div id="rows"></div>
-<p style="font-size:.85rem">Green = needle goes over the thread, tan = under. Each row starts the opposite way from the one above. The grid is one thread wider each side of the hole to anchor on.</p>
+<p style="font-size:.85rem"><span class="key o"></span> Green = needle goes over the thread, <span class="key u"></span> tan = under. Each row starts the opposite way from the one above. The grid is one thread wider each side of the hole to anchor on.</p>
 </main>
 <script>
 function makeWeave(opts){
@@ -40,40 +44,39 @@ function makeWeave(opts){
 var weave=makeWeave();
 var brokenWeave=makeWeave({noFlip:true});
 function gridSize(d,s){return Math.ceil(d/s)+2;}
-var SAMPLE=['OUOU','UOUO','OUOU','UOUO'];
+var CASES=[[0,4,'OUOU'],[1,4,'UOUO'],[2,4,'OUOU'],[3,4,'UOUO'],[1,1,'U']];
 function sampleOk(fn){
-  for(var r=0;r<4;r++){ if(fn(r,4)!==SAMPLE[r]) return false; }
+  for(var i=0;i<CASES.length;i++){ if(fn(CASES[i][0],CASES[i][1])!==CASES[i][2]) return false; }
   return gridSize(30,10)===5 && gridSize(31,10)===6;
 }
-var checkResult=false;
-try{
-  var good=sampleOk(weave), twinRejected=!sampleOk(brokenWeave);
-  checkResult=good&&twinRejected;
-  if(!checkResult) console.error('weave check failed',good,twinRejected);
-}catch(e){console.error(e);}
+(function(){
+  try{
+    var good=sampleOk(weave), twinPassed=sampleOk(brokenWeave);
+    if(!good) console.error('weave rule rejected');
+    if(twinPassed) console.error('broken twin got through');
+  }catch(e){console.error('weave test crashed',e);}
+})();
 
 var dEl=document.getElementById('d'),sEl=document.getElementById('s');
 function draw(){
   var d=parseFloat(dEl.value),s=parseFloat(sEl.value);
-  var g=document.getElementById('grid'),info=document.getElementById('info'),rows=document.getElementById('rows');
-  g.innerHTML='';rows.innerHTML='';
+  var g=document.getElementById('grid'),info=document.getElementById('info');
+  g.innerHTML='';
   if(!(d>0)||!(s>0)){info.textContent='Enter a hole size and a spacing above zero.';return;}
   var n=gridSize(d,s);
   if(n>40){info.textContent='That is '+n+' threads across, too many to draw. Try a bigger spacing.';return;}
   info.textContent=n+' threads across, '+n+' rows.';
   g.style.gridTemplateColumns='repeat('+n+',1fr)';
-  var lines=[];
   for(var r=0;r<n;r++){
     var w=weave(r,n);
-    lines.push('Row '+(r+1)+': '+w);
     for(var c=0;c<n;c++){
       var x=document.createElement('div');
-      x.className='c '+(w[c]==='O'?'o':'u');
-      x.textContent=w[c];
+      var over=w.charAt(c)==='O';
+      x.className='c '+(over?'o':'u');
+      x.title=(over?'over':'under');
       g.appendChild(x);
     }
   }
-  rows.innerHTML=lines.join('<br>');
 }
 dEl.oninput=draw;sEl.oninput=draw;
 draw();
